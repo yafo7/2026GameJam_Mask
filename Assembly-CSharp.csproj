@@ -70,6 +70,7 @@
     <Compile Include="Assets\Scripts\CameraFollow.cs" />
     <Compile Include="Assets\Scripts\PlayerState.cs" />
     <Compile Include="Assets\Scripts\StateNormal.cs" />
+    <Compile Include="Assets\Scripts\StateGunner.cs" />
     <Compile Include="Assets\Scripts\StatePlatformer.cs" />
     <Compile Include="Assets\Scripts\BodyPartTrigger.cs" />
     <Compile Include="Assets\Scripts\MeleeHandler.cs" />

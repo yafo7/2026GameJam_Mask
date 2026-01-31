@@ -17,6 +17,9 @@ public class PlayerController : MonoBehaviour
     public Transform firePoint;
     public float attackRange = 1.2f; // 挥剑检测半径
 
+    [Header("状态5：枪手配置")]
+    public GameObject bulletPrefab; // 状态5专用的子弹Prefab
+
     [Header("跳跃配置")]
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
