@@ -29,6 +29,14 @@ public class StateBuilder : PlayerState
         // 2. 更新选框位置 (移植自 MinerMask.UpdateDigTarget)
         UpdateSelectorPosition();
 
+        player.PerformMovement(0.8f); // 建造时移动稍微慢一点
+
+        // 状态4增加跳跃功能
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            player.PerformJump();
+        }
+
         // 3. 监听 J 键 (破坏)
         if (Input.GetKeyDown(KeyCode.J))
         {

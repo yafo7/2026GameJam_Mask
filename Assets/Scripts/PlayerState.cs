@@ -18,11 +18,13 @@ public abstract class PlayerState
         float h = Input.GetAxisRaw("Horizontal"); // A/D
         player.SetVelocityX(h * moveSpeed);
 
-        if (h != 0)
+        /*if (h != 0)
         {
             // 处理朝向翻转
             player.transform.localScale = new Vector3(h > 0 ? 1 : -1, 1, 1);
-        }
+        }*/
+
+        player.FlipCharacter(h);
     }
     public virtual void PhysicsUpdate() { } // 物理更新
     public virtual void Exit() { } // 退出状态时调用

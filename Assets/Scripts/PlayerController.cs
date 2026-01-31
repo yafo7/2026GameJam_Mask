@@ -15,7 +15,20 @@ public class PlayerController : MonoBehaviour
     [Header("战斗配置")]
     public GameObject arrowPrefab;
     public Transform firePoint;
+    public float attackRange = 1.2f; // 挥剑检测半径
 
+    [Header("跳跃配置")]
+    public float moveSpeed = 5f;
+    public float jumpForce = 5f;
+
+    [Header("玩家属性")]
+    public int health = 3;
+    public int maxHealth = 3;
+    public Transform keyHoldPoint; // 钥匙挂载点（在玩家前方）
+    private GameObject carriedKey; // 当前携带的钥匙
+
+    //用来存储在编辑器里设置的缩放大小
+    public Vector3 initialScale;
 
     // 当前状态
     private PlayerState currentState;
@@ -30,6 +43,9 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        //游戏一开始，先记录下当前的形状大小
+        initialScale = transform.localScale;
 
         // 初始化所有状态
         stateNormal = new StateNormal(this);
@@ -74,6 +90,9 @@ public class PlayerController : MonoBehaviour
         if (stateIndex - 1 < stateModels.Length)
             stateModels[stateIndex - 1].SetActive(true);
 
+        //通知UI更新
+        //if (UIManager.Instance != null) UIManager.Instance.UpdateStateUI(stateIndex);
+
         // 3. 切换逻辑
         switch (stateIndex)
         {
@@ -87,6 +106,57 @@ public class PlayerController : MonoBehaviour
         currentState.Enter();
     }
 
+    // 受伤逻辑
+    public void TakeDamage(int damage)
+    {
+        health -= damage;
+        health = Mathf.Clamp(health, 0, maxHealth);
+        UIManager.Instance.UpdateHealthUI(health);
+        if (health <= 0)
+        {
+            rb.simulated = false; // 禁用物理
+        }
+    }
+
+    // 加血逻辑
+    public void Heal(int amount)
+    {
+        health += amount;
+        health = Mathf.Clamp(health, 0, maxHealth);
+        UIManager.Instance.UpdateHealthUI(health);
+    }
+
+    // 拾取钥匙逻辑
+    public void PickUpKey(GameObject key)
+    {
+        if (carriedKey != null) return;
+        carriedKey = key;
+        key.transform.SetParent(this.transform);
+        // 实时更新位置到玩家前方 (FlipCharacter时 keyHoldPoint 会跟着转)
+        key.transform.localPosition = new Vector3(1f, 0, 0);
+    }
+
+    // --- 通用动作方法 ---
+    public void PerformMovement(float speedMultiplier = 1f)
+    {
+        float h = Input.GetAxisRaw("Horizontal");
+        rb.velocity = new Vector2(h * moveSpeed * speedMultiplier, rb.velocity.y);
+        if (Mathf.Abs(h) > 0.01f)
+        {
+            float dir = Mathf.Sign(h);
+            transform.localScale = new Vector3(Mathf.Abs(initialScale.x) * dir, initialScale.y, initialScale.z);
+        }
+    }
+
+    public void PerformJump(float forceMultiplier = 1f)
+    {
+        // 简单的地面判定：纵向速度接近0时可跳
+        if (Mathf.Abs(rb.velocity.y) < 0.01f)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce * forceMultiplier);
+        }
+    }
+
     // --- 公共辅助方法 ---
     public void SetVelocityX(float x)
     {
@@ -96,5 +166,24 @@ public class PlayerController : MonoBehaviour
     public void SetVelocityY(float y)
     {
         rb.velocity = new Vector2(rb.velocity.x, y);
+    }
+
+    // ---通用的翻转方法 ---
+    // 所有的状态(State)都应该调用这个方法
+    public void FlipCharacter(float xInput)
+    {
+        if (Mathf.Abs(xInput) > 0.01f) // 只有当有输入时才判断
+        {
+            // 获取方向：1 是右，-1 是左
+            float direction = Mathf.Sign(xInput);
+
+            // 使用 initialScale (初始大小) 的绝对值，乘以方向
+            // 这样无论你怎么缩放，它都会保持那个大小，只是改变朝向
+            transform.localScale = new Vector3(
+                Mathf.Abs(initialScale.x) * direction,
+                initialScale.y,
+                initialScale.z
+            );
+        }
     }
 }

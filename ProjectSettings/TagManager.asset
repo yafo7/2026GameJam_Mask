@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Enemy
+  - BreakableBrick
+  - Grass
   layers:
   - Default
   - TransparentFX

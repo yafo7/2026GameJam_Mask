@@ -3,7 +3,7 @@ using UnityEngine;
 //马里奥
 public class StatePlatformer : PlayerState
 {
-    private float jumpForce = 10f;
+    private float jumpForce = 7f;
 
     public StatePlatformer(PlayerController player) : base(player) { }
 

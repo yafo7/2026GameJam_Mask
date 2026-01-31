@@ -60,8 +60,11 @@
     <Analyzer Include="D:\GameDownload\unityHub\editer\2022.3.62f3c1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\InteractableItem.cs" />
     <Compile Include="Assets\Scripts\ArrowProjectile.cs" />
+    <Compile Include="Assets\Scripts\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\UIManager.cs" />
     <Compile Include="Assets\Scripts\StateBuilder.cs" />
     <Compile Include="Assets\Scripts\StateCombat.cs" />
     <Compile Include="Assets\Scripts\PlayerState.cs" />
