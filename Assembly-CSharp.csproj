@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\UIManager.cs" />
     <Compile Include="Assets\Scripts\StateBuilder.cs" />
     <Compile Include="Assets\Scripts\StateCombat.cs" />
+    <Compile Include="Assets\Scripts\CameraFollow.cs" />
     <Compile Include="Assets\Scripts\PlayerState.cs" />
     <Compile Include="Assets\Scripts\StateNormal.cs" />
     <Compile Include="Assets\Scripts\StatePlatformer.cs" />

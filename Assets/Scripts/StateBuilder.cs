@@ -1,57 +1,63 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static UnityEditor.PlayerSettings;
 
 public class StateBuilder : PlayerState
 {
     // 构造函数
     public StateBuilder(PlayerController player) : base(player) { }
 
+    // 🎭 进入状态：激活选框
     public override void Enter()
     {
         Debug.Log("进入状态4：建造模式");
-        // 打开可视化选框
         if (player.gridSelector != null)
+        {
             player.gridSelector.gameObject.SetActive(true);
+            // 确保进入瞬间立即更新一次位置，防止选框闪烁
+            UpdateSelectorPosition();
+        }
     }
 
+    // 🚫 退出状态：隐藏选框
     public override void Exit()
     {
-        // 关闭可视化选框
         if (player.gridSelector != null)
             player.gridSelector.gameObject.SetActive(false);
     }
 
     public override void HandleInput()
     {
-        // 1. 保持移动能力 (继承基类通用逻辑)
-        base.HandleInput();
+        // 1. 基础水平移动
+        float h = Input.GetAxisRaw("Horizontal");
+        player.SetVelocityX(h * player.moveSpeed * 0.8f); // 建造时移动稍微慢一点
 
-        // 2. 更新选框位置 (移植自 MinerMask.UpdateDigTarget)
+        // 调用通用的翻转逻辑（确保 Scale.x 正确）
+        player.FlipCharacter(h);
+
+        // 2. 核心：更新选框位置 (同步 MinerMask 逻辑)
         UpdateSelectorPosition();
 
-        player.PerformMovement(0.8f); // 建造时移动稍微慢一点
-
-        // 状态4增加跳跃功能
+        // 3. 跳跃功能
         if (Input.GetKeyDown(KeyCode.Space))
         {
             player.PerformJump();
         }
 
-        // 3. 监听 J 键 (破坏)
+        // 4. 监听 J 键 (破坏)
         if (Input.GetKeyDown(KeyCode.J))
         {
             PerformDestroy();
         }
 
-        // 4. 监听 K 键 (建造)
+        // 5. 监听 K 键 (建造)
         if (Input.GetKeyDown(KeyCode.K))
         {
             PerformBuild();
         }
     }
 
-    // --- 核心辅助逻辑 ---
-
+    // 🎯 计算目标位置 (完全同步自 MinerMask.UpdateDigTarget)
     void UpdateSelectorPosition()
     {
         if (player.gridSelector == null || player.groundTilemap == null) return;
@@ -60,7 +66,7 @@ public class StateBuilder : PlayerState
         Vector3Int playerGridPos = player.groundTilemap.WorldToCell(player.transform.position);
         Vector3Int offset = Vector3Int.zero;
 
-        // 逻辑：W优先上，S优先下，否则根据玩家朝向决定左右
+        // 决定偏移方向：W/S 优先，否则根据当前 Scale 判断左右
         if (Input.GetKey(KeyCode.W))
         {
             offset = Vector3Int.up;
@@ -71,28 +77,31 @@ public class StateBuilder : PlayerState
         }
         else
         {
-            // 根据玩家 Scale.x 判断朝向 (1为右, -1为左)
+            // 使用 Mathf.Sign 确保即使缩放不是 1 也能正确判断正负
             if (player.transform.localScale.x > 0)
                 offset = Vector3Int.right;
             else
                 offset = Vector3Int.left;
         }
 
-        // 计算目标格子的世界坐标
         Vector3Int targetGridPos = playerGridPos + offset;
 
-        // 更新选框物体的位置（对齐到网格中心）
-        player.gridSelector.position = player.groundTilemap.GetCellCenterWorld(targetGridPos);
+        // 移动框框到目标格子的中心
+        //player.gridSelector.position = player.groundTilemap.GetCellCenterWorld(targetGridPos);
+
+        Vector3 cellCenter = player.groundTilemap.GetCellCenterWorld(targetGridPos);
+        // 将 Z 设为 -1f (确保在 Z=0 的 Tilemap 前面)
+        player.gridSelector.position = new Vector3(cellCenter.x, cellCenter.y, -1f);
+
     }
 
+    // ⚔️ 破坏逻辑
     void PerformDestroy()
     {
         if (player.gridSelector == null) return;
 
-        // 获取选框当前所在的格子
         Vector3Int targetPos = player.groundTilemap.WorldToCell(player.gridSelector.position);
 
-        // 如果有东西，就挖掉 (设为 null)
         if (player.groundTilemap.HasTile(targetPos))
         {
             player.groundTilemap.SetTile(targetPos, null);
@@ -100,6 +109,7 @@ public class StateBuilder : PlayerState
         }
     }
 
+    // ⚔️ 建造逻辑
     void PerformBuild()
     {
         if (player.gridSelector == null || player.buildTile == null) return;
@@ -110,7 +120,7 @@ public class StateBuilder : PlayerState
         // 防止把自己埋在墙里：如果目标位置就是玩家站的位置，不允许建造
         if (targetPos == playerPos) return;
 
-        // 如果该位置是空的，就填上土块
+        // 如果该位置是空的，就填上方块
         if (player.groundTilemap.GetTile(targetPos) == null)
         {
             player.groundTilemap.SetTile(targetPos, player.buildTile);
