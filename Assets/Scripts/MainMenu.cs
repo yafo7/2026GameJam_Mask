@@ -19,4 +19,11 @@ public class MainMenu : MonoBehaviour
         // 实际打包后的退出逻辑
         Application.Quit();
     }
+
+    public void BackToMenu()
+    {
+        // 跳转场景
+        // 请确保你在 Build Settings 中已经添加了该场景
+        SceneManager.LoadScene("GameStart");
+    }
 }
