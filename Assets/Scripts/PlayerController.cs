@@ -7,10 +7,13 @@ public class PlayerController : MonoBehaviour
     public GameObject[] stateModels; // 对应状态1-5的子物体模型(Prefab1-5)
     public Rigidbody2D rb;
 
+    // 【新增】核心变量：用来记住当前正在使用的那个动画机
+    private Animator currentAnimator;
+
     [Header("状态4：建造模式配置")]
     public Tilemap groundTilemap; // 地形Tilemap
     public TileBase buildTile;    // 要建造的方块资源
-    public Transform gridSelector; // 【新增】可视化选框（一个半透明的方块）
+    public Transform gridSelector; // 可视化选框
 
     [Header("战斗配置")]
     public GameObject arrowPrefab;
@@ -27,10 +30,10 @@ public class PlayerController : MonoBehaviour
     [Header("玩家属性")]
     public int health = 3;
     public int maxHealth = 3;
-    public Transform keyHoldPoint; // 钥匙挂载点（在玩家前方）
+    public Transform keyHoldPoint; // 钥匙挂载点
     private GameObject carriedKey; // 当前携带的钥匙
 
-    //用来存储在编辑器里设置的缩放大小
+    // 用来存储在编辑器里设置的缩放大小
     public Vector3 initialScale;
 
     // 当前状态
@@ -41,13 +44,13 @@ public class PlayerController : MonoBehaviour
     public StatePlatformer statePlatformer;
     public StateCombat stateCombat;
     public StateBuilder stateBuilder;
-    public StateGunner stateGunner; // 状态5实例
+    public StateGunner stateGunner; 
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
 
-        //游戏一开始，先记录下当前的形状大小
+        // 游戏一开始，先记录下当前的形状大小
         initialScale = transform.localScale;
 
         // 初始化所有状态
@@ -57,7 +60,7 @@ public class PlayerController : MonoBehaviour
         stateBuilder = new StateBuilder(this);
         stateGunner = new StateGunner(this);
 
-        // 默认关闭选框（只有切到状态4才打开）
+        // 默认关闭选框
         if (gridSelector != null) gridSelector.gameObject.SetActive(false);
 
         // 默认进入状态1
@@ -75,11 +78,30 @@ public class PlayerController : MonoBehaviour
 
         // 执行当前状态的逻辑
         currentState?.HandleInput();
+
+        // 【新增】每一帧都去更新动画
+        // 这一步如果不加，Animator 永远收不到 Speed 参数！
+        UpdateAnimation();
     }
 
     void FixedUpdate()
     {
         currentState?.PhysicsUpdate();
+    }
+
+    // 【新增】专门处理动画参数的方法
+    void UpdateAnimation()
+    {
+        // 只有当获取到了动画机，才去设置参数，防止报错
+        if (currentAnimator != null)
+        {
+            // 获取刚体X轴速度的绝对值（因为向左走速度是负数，但我们要传正数）
+            float speed = Mathf.Abs(rb.velocity.x);
+            
+            // 传给 Animator 里的 "Speed" 参数
+            // 确保你在 Unity Animator 面板里设的参数名也是 "Speed"
+            currentAnimator.SetFloat("Speed", speed);
+        }
     }
 
     // 状态切换核心逻辑
@@ -92,11 +114,19 @@ public class PlayerController : MonoBehaviour
 
         // 2. 激活对应模型 (索引从0开始，所以减1)
         if (stateIndex - 1 < stateModels.Length)
-            stateModels[stateIndex - 1].SetActive(true);
+        {
+            // 拿到当前要激活的模型
+            GameObject activeModel = stateModels[stateIndex - 1];
+            activeModel.SetActive(true);
+
+            // 【新增】关键一步：每次切换物体，都要把它的 Animator 抓出来赋值给 currentAnimator
+            // 这样 UpdateAnimation() 才能控制正确的那个物体
+            currentAnimator = activeModel.GetComponent<Animator>();
+        }
 
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.UpdateStateUI(stateIndex); // 传入 1, 2, 3, 4, 5
+            UIManager.Instance.UpdateStateUI(stateIndex); 
         }
 
         // 3. 切换逻辑
@@ -118,10 +148,13 @@ public class PlayerController : MonoBehaviour
     {
         health -= damage;
         health = Mathf.Clamp(health, 0, maxHealth);
-        UIManager.Instance.UpdateHealthUI(health);
+        // 记得在这里调用你的 UIManager 更新血量
+        if(UIManager.Instance != null) UIManager.Instance.UpdateHealthUI(health);
+        
         if (health <= 0)
         {
             rb.simulated = false; // 禁用物理
+            // 如果有 GameUI，可以在这里调用 Game Over
         }
     }
 
@@ -130,7 +163,7 @@ public class PlayerController : MonoBehaviour
     {
         health += amount;
         health = Mathf.Clamp(health, 0, maxHealth);
-        UIManager.Instance.UpdateHealthUI(health);
+        if(UIManager.Instance != null) UIManager.Instance.UpdateHealthUI(health);
     }
 
     // 拾取钥匙逻辑
@@ -139,7 +172,6 @@ public class PlayerController : MonoBehaviour
         if (carriedKey != null) return;
         carriedKey = key;
         key.transform.SetParent(this.transform);
-        // 实时更新位置到玩家前方 (FlipCharacter时 keyHoldPoint 会跟着转)
         key.transform.localPosition = new Vector3(1f, 0, 0);
     }
 
@@ -148,23 +180,19 @@ public class PlayerController : MonoBehaviour
     {
         float h = Input.GetAxisRaw("Horizontal");
         rb.velocity = new Vector2(h * moveSpeed * speedMultiplier, rb.velocity.y);
-        if (Mathf.Abs(h) > 0.01f)
-        {
-            float dir = Mathf.Sign(h);
-            transform.localScale = new Vector3(Mathf.Abs(initialScale.x) * dir, initialScale.y, initialScale.z);
-        }
+        
+        // 【建议】把翻转逻辑放在这里调用
+        FlipCharacter(h);
     }
 
     public void PerformJump(float forceMultiplier = 1f)
     {
-        // 简单的地面判定：纵向速度接近0时可跳
         if (Mathf.Abs(rb.velocity.y) < 0.01f)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce * forceMultiplier);
         }
     }
 
-    // --- 公共辅助方法 ---
     public void SetVelocityX(float x)
     {
         rb.velocity = new Vector2(x, rb.velocity.y);
@@ -176,16 +204,12 @@ public class PlayerController : MonoBehaviour
     }
 
     // ---通用的翻转方法 ---
-    // 所有的状态(State)都应该调用这个方法
     public void FlipCharacter(float xInput)
     {
-        if (Mathf.Abs(xInput) > 0.01f) // 只有当有输入时才判断
+        if (Mathf.Abs(xInput) > 0.01f) 
         {
-            // 获取方向：1 是右，-1 是左
             float direction = Mathf.Sign(xInput);
 
-            // 使用 initialScale (初始大小) 的绝对值，乘以方向
-            // 这样无论你怎么缩放，它都会保持那个大小，只是改变朝向
             transform.localScale = new Vector3(
                 Mathf.Abs(initialScale.x) * direction,
                 initialScale.y,

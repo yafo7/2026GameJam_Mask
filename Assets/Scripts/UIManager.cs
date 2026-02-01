@@ -20,6 +20,14 @@ public class UIManager : MonoBehaviour
 
     void Awake() { Instance = this; }
 
+    void Start()
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false); // 关掉它！
+        }
+    }
+
     // 更新血量显示
     public void UpdateHealthUI(int currentHealth)
     {
