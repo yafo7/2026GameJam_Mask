@@ -129,6 +129,12 @@ public class PlayerController : MonoBehaviour
             UIManager.Instance.UpdateStateUI(stateIndex); 
         }
 
+        //音效
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayStateSwitchSound(stateIndex);
+        }
+
         // 3. 切换逻辑
         switch (stateIndex)
         {
@@ -150,7 +156,12 @@ public class PlayerController : MonoBehaviour
         health = Mathf.Clamp(health, 0, maxHealth);
         // 记得在这里调用你的 UIManager 更新血量
         if(UIManager.Instance != null) UIManager.Instance.UpdateHealthUI(health);
-        
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.playerHitClip);
+        }
+
         if (health <= 0)
         {
             rb.simulated = false; // 禁用物理
