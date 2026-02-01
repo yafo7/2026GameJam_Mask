@@ -66,12 +66,14 @@
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\UIManager.cs" />
     <Compile Include="Assets\Scripts\StateBuilder.cs" />
+    <Compile Include="Assets\Scripts\DamageDealer.cs" />
     <Compile Include="Assets\Scripts\StateCombat.cs" />
     <Compile Include="Assets\Scripts\CameraFollow.cs" />
     <Compile Include="Assets\Scripts\PlayerState.cs" />
     <Compile Include="Assets\Scripts\StateNormal.cs" />
     <Compile Include="Assets\Scripts\StateGunner.cs" />
     <Compile Include="Assets\Scripts\StatePlatformer.cs" />
+    <Compile Include="Assets\Scripts\BossAI.cs" />
     <Compile Include="Assets\Scripts\BodyPartTrigger.cs" />
     <Compile Include="Assets\Scripts\MeleeHandler.cs" />
   </ItemGroup>

@@ -11,9 +11,9 @@ public class UIManager : MonoBehaviour
     public Sprite emptyHeart;   // 空心心
 
     [Header("状态UI")]
-    public Image[] stateIcons;  // 拖入4个状态图标
+    public Image[] stateIcons;  // 拖入5个状态图标
     public Color activeColor = Color.white;
-    public Color inactiveColor = new Color(1, 1, 1, 0.3f);
+    public Color inactiveColor = new Color(0.5f, 0.5f, 0.5f, 0.5f); // 未选中时的颜色（半透明变暗）
 
     [Header("游戏结束")]
     public GameObject gameOverPanel;
@@ -31,12 +31,23 @@ public class UIManager : MonoBehaviour
         if (currentHealth <= 0) gameOverPanel.SetActive(true);
     }
 
-    // 更新状态高亮
-    /*public void UpdateStateUI(int activeIndex)
+    public void UpdateStateUI(int activeIndex)
     {
+        // activeIndex 传进来是 1~5，但数组下标是 0~4
         for (int i = 0; i < stateIcons.Length; i++)
         {
-            stateIcons[i].color = (i == activeIndex - 1) ? activeColor : inactiveColor;
+            if (i == activeIndex - 1)
+            {
+                // 选中的图标：设为高亮色，甚至可以稍微放大一点增加反馈
+                stateIcons[i].color = activeColor;
+                stateIcons[i].transform.localScale = Vector3.one * 1.2f; // (可选) 放大1.2倍
+            }
+            else
+            {
+                // 未选中的图标：设为暗色，恢复原大小
+                stateIcons[i].color = inactiveColor;
+                stateIcons[i].transform.localScale = Vector3.one;
+            }
         }
-    }*/
+    }
 }

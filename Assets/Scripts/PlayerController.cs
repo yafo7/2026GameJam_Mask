@@ -41,7 +41,7 @@ public class PlayerController : MonoBehaviour
     public StatePlatformer statePlatformer;
     public StateCombat stateCombat;
     public StateBuilder stateBuilder;
-    // public StateIdle stateIdle; // 状态5预留
+    public StateGunner stateGunner; // 状态5实例
 
     void Start()
     {
@@ -55,6 +55,7 @@ public class PlayerController : MonoBehaviour
         statePlatformer = new StatePlatformer(this);
         stateCombat = new StateCombat(this);
         stateBuilder = new StateBuilder(this);
+        stateGunner = new StateGunner(this);
 
         // 默认关闭选框（只有切到状态4才打开）
         if (gridSelector != null) gridSelector.gameObject.SetActive(false);
@@ -93,8 +94,10 @@ public class PlayerController : MonoBehaviour
         if (stateIndex - 1 < stateModels.Length)
             stateModels[stateIndex - 1].SetActive(true);
 
-        //通知UI更新
-        //if (UIManager.Instance != null) UIManager.Instance.UpdateStateUI(stateIndex);
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateStateUI(stateIndex); // 传入 1, 2, 3, 4, 5
+        }
 
         // 3. 切换逻辑
         switch (stateIndex)
@@ -103,6 +106,7 @@ public class PlayerController : MonoBehaviour
             case 2: currentState = statePlatformer; break;
             case 3: currentState = stateCombat; break;
             case 4: currentState = stateBuilder; break;
+            case 5: currentState = stateGunner; break;
             default: Debug.Log("State 5 未定义"); break;
         }
 

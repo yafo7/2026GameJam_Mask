@@ -36,6 +36,11 @@ public class StateGunner : PlayerState
         // 生成子弹
         GameObject bullet = Object.Instantiate(player.bulletPrefab, player.firePoint.position, Quaternion.identity);
 
+        // 给子弹设置高额伤害 (333)
+        DamageDealer dealer = bullet.AddComponent<DamageDealer>();
+        dealer.damageAmount = 333;
+        bullet.tag = "Projectile"; // 标记为飞行物
+
         // 计算方向：根据玩家当前的缩放正负来决定子弹朝向
         float direction = Mathf.Sign(player.transform.localScale.x);
 
